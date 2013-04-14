@@ -132,4 +132,5 @@ class Parser:
 
 if __name__ == "__main__":
 	p = Parser(scanner.Scanner(sys.argv[1]))
-	p.parse()
+	t = p.parse()
+	t.print_tree(0)
