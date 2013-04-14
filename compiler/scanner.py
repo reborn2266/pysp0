@@ -90,5 +90,10 @@ class Scanner:
 
 if __name__ == "__main__":
 	s = Scanner(sys.argv[1]);
-	while s.next_token():
-		pass
+	while True:
+		tok = s.next_token()
+		if tok:
+			print('type:'+tok.part_of_speech)
+			print('value:'+tok.word)
+		else:
+			break
