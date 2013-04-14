@@ -1,62 +1,88 @@
 #!/usr/bin/python
 
-import sys, re
+import sys
+
+STRING_START 	= '\"'
+STRING_END 		= '\"'
+OPERATORS 		= '+-*/<=>!'
+DIGITS 			= '0123456789'
+ALPHAS 			= 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+KEYWORDS		= '|if|for|while|return|'
+OPERATOR1 		= '|++|--|'
+OPERATOR2 		= '|+|-|*|/|'
+COND_OP			= '|==|!=|<=|>=|<|>|'
+ITEM			= '|id|number|string|'
+OP				= '+-*/<=>!'
+
+STRING_T		= 'string'
+NUMBER_T		= 'number'
+ID_T			= 'id'
 
 class Token:
-	STRING 		= 'string'
-	OPERATOR 	= 'operator'
-	DIGIT 		= 'digit'
-	ALPHA 		= 'alpha'
-
-	def __init__(self, part_of_speech, word):
-		self.part_of_speech = part_of_speech
+	def __init__(self, word):
 		self.word = word
+		if word in KEYWORDS:
+			self.part_of_speech = word
+		elif word[0] == STRING_START:
+			self.part_of_speech = STRING_T
+		elif word[0] in DIGITS:
+			self.part_of_speech = NUMBER_T
+		elif word[0] in ALPHAS:
+			self.part_of_speech = ID_T
+		else:
+			self.part_of_speech = word
 
 class Scanner:
-	STRING_START 	= '\"'
-	STRING_END 		= '\"'
-	OPERATORS 		= '+-*/<=>!'
-	DIGITS 			= '0123456789'
-	ALPHAS 			= 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
 	def __init__(self, file_name):
 		with open(file_name, 'r') as f:
-			self._prog_src = re.sub(r'\s', '', f.read())
+			self._prog_src = f.read()
 			self._cur_ch_idx = 0
 			self._ch_len = len(self._prog_src)
 
-	def _consume_until(self, start, group, tok_type):
+	def _consume_until(self, start, group):
 		while self._prog_src[self._cur_ch_idx] in group:
 			self._cur_ch_idx += 1
 			if self._cur_ch_idx >= self._ch_len:
 				break
-		tok = Token(tok_type, self._prog_src[start:self._cur_ch_idx])
-		print(tok.word)
-		print(tok.part_of_speech)
+		tok = Token(self._prog_src[start:self._cur_ch_idx])
+		#print(tok.word)
+		#print(tok.part_of_speech)
 		return tok
 
 	def next_token(self):
 		try:
-			ch = self._prog_src[self._cur_ch_idx]
+			while True:
+				ch = self._prog_src[self._cur_ch_idx]
+				if ch == ' ' or ch == '\t' or ch == '\n':
+					self._cur_ch_idx += 1
+					continue
+				else:
+					break
 			tok_begin = self._cur_ch_idx
 
-			if ch == Scanner.STRING_START:
-				self._cur_ch_idx = self._prog_src.find(Scanner.STRING_END, self._cur_ch_idx+1)
+			if ch == STRING_START:
+				self._cur_ch_idx = self._prog_src.find(STRING_END, self._cur_ch_idx+1)
 				if self._cur_ch_idx == -1:
 					print("string mismatch")
 					return None
 				else:
 					self._cur_ch_idx += 1
-					tok = Token(Token.STRING, self._prog_src[tok_begin:self._cur_ch_idx])
-					print(tok.word)
-					print(tok.part_of_speech)
+					tok = Token(self._prog_src[tok_begin:self._cur_ch_idx])
+					#print(tok.word)
+					#print(tok.part_of_speech)
 					return tok
-			elif ch in Scanner.OPERATORS:
-				return self._consume_until(tok_begin, Scanner.OPERATORS, Token.OPERATOR)
-			elif ch in Scanner.DIGITS:
-				return self._consume_until(tok_begin, Scanner.DIGITS, Token.DIGIT)
-			elif ch in Scanner.ALPHAS:
-				return self._consume_until(tok_begin, Scanner.ALPHAS+Scanner.DIGITS, Token.ALPHA)
+			elif ch in OPERATORS:
+				return self._consume_until(tok_begin, OPERATORS)
+			elif ch in DIGITS:
+				return self._consume_until(tok_begin, DIGITS)
+			elif ch in ALPHAS:
+				return self._consume_until(tok_begin, ALPHAS+DIGITS)
+			else:
+				self._cur_ch_idx += 1
+				tok = Token(self._prog_src[tok_begin:self._cur_ch_idx])
+				#print(tok.word)
+				#print(tok.part_of_speech)
+				return tok
 		
 		except IndexError:
 			return None
